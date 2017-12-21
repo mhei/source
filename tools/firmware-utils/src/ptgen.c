@@ -53,16 +53,15 @@ struct pte {
 struct partinfo {
 	unsigned long size;
 	int type;
+	int kb_align;
 };
 
 int verbose = 0;
 int active = 1;
 int heads = -1;
 int sectors = -1;
-int kb_align = 0;
 struct partinfo parts[4];
 char *filename = NULL;
-
 
 /*
  * parse the size argument, which is either
@@ -127,7 +126,8 @@ static inline unsigned long round_to_cyl(long sect)
 }
 
 /* round the sector number up to the kb_align boundary */
-static inline unsigned long round_to_kb(long sect) {
+static inline unsigned long round_to_kb(long sect, int kb_align)
+{
         return ((sect - 1) / kb_align + 1) * kb_align;
 }
 
@@ -150,12 +150,12 @@ static int gen_ptable(uint32_t signature, int nr)
 		pte[i].type = parts[i].type;
 
 		start = sect + ((i == 0) ? sectors : 0);
-		if (kb_align != 0)
-			start = round_to_kb(start);
+		if (parts[i].kb_align != 0)
+			start = round_to_kb(start, parts[i].kb_align);
 		pte[i].start = cpu_to_le32(start);
 
 		sect = start + parts[i].size * 2;
-		if (kb_align == 0)
+		if (parts[i].kb_align == 0)
 			sect = round_to_cyl(sect);
 		pte[i].length = cpu_to_le32(len = sect - start);
 
@@ -198,15 +198,17 @@ fail:
 
 static void usage(char *prog)
 {
-	fprintf(stderr, "Usage: %s [-v] -h <heads> -s <sectors> -o <outputfile> [-a 0..4] [-l <align kB>] [[-t <type>] -p <size>...] \n", prog);
+	fprintf(stderr, "Usage: %s [-v] -h <heads> -s <sectors> -o <outputfile> [-a 0..4] [[-l <align kB>] [-t <type>] -p <size>...] \n", prog);
 	exit(EXIT_FAILURE);
 }
 
 int main (int argc, char **argv)
 {
+	int kb_align = 0;
 	char type = 0x83;
 	int ch;
 	int part = 0;
+
 	uint32_t signature = 0x5452574F; /* 'OWRT' */
 
 	while ((ch = getopt(argc, argv, "h:s:p:a:t:o:vl:S:")) != -1) {
@@ -229,6 +231,7 @@ int main (int argc, char **argv)
 				exit(EXIT_FAILURE);
 			}
 			parts[part].size = to_kbytes(optarg);
+			parts[part].kb_align = kb_align;
 			parts[part++].type = type;
 			break;
 		case 't':

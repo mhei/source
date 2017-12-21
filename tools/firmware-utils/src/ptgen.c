@@ -166,7 +166,7 @@ static int gen_ptable(uint32_t signature, int nr)
 		printf("%ld\n", (long)len * 512);
 	}
 
-	if ((fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC, 0644)) < 0) {
+	if ((fd = open(filename, O_WRONLY|O_CREAT, 0644)) < 0) {
 		fprintf(stderr, "Can't open output file '%s'\n",filename);
 		return -1;
 	}

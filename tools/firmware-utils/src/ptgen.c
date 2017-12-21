@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <stdint.h>
+#include <errno.h>
 
 #if __BYTE_ORDER == __BIG_ENDIAN
 #define cpu_to_le32(x) bswap_32(x)
@@ -168,24 +169,24 @@ static int gen_ptable(uint32_t signature, int nr)
 	}
 
 	if ((fd = open(filename, O_WRONLY|O_CREAT, 0644)) < 0) {
-		fprintf(stderr, "Can't open output file '%s'\n",filename);
+		fprintf(stderr, "Can't open output file '%s': %s\n", filename, strerror(errno));
 		return -1;
 	}
 
 	lseek(fd, 440, SEEK_SET);
 	if (write(fd, &signature, sizeof(signature)) != sizeof(signature)) {
-		fprintf(stderr, "write failed.\n");
+		perror("Writing disk signature failed");
 		goto fail;
 	}
 
 	lseek(fd, 446, SEEK_SET);
 	if (write(fd, pte, sizeof(struct pte) * 4) != sizeof(struct pte) * 4) {
-		fprintf(stderr, "write failed.\n");
+		perror("Writing partition table failed");
 		goto fail;
 	}
 	lseek(fd, 510, SEEK_SET);
 	if (write(fd, "\x55\xaa", 2) != 2) {
-		fprintf(stderr, "write failed.\n");
+		perror("Writing signature failed");
 		goto fail;
 	}
 

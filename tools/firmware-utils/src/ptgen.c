@@ -149,7 +149,7 @@ static int gen_ptable(uint32_t signature, int nr)
 		pte[i].active = ((i + 1) == active) ? 0x80 : 0;
 		pte[i].type = parts[i].type;
 
-		start = sect + sectors;
+		start = sect + ((i == 0) ? sectors : 0);
 		if (kb_align != 0)
 			start = round_to_kb(start);
 		pte[i].start = cpu_to_le32(start);

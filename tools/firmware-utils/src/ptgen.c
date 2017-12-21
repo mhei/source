@@ -135,7 +135,8 @@ static int gen_ptable(uint32_t signature, int nr)
 {
 	struct pte pte[4];
 	unsigned long sect = 0;
-	int i, fd, ret = -1, start, len;
+	unsigned long start, len;
+	int i, fd, ret = -1;
 
 	memset(pte, 0, sizeof(struct pte) * 4);
 	for (i = 0; i < nr; i++) {
@@ -161,9 +162,9 @@ static int gen_ptable(uint32_t signature, int nr)
 		to_chs(start + len - 1, pte[i].chs_end);
 
 		if (verbose)
-			fprintf(stderr, "Partition %d: start=%ld, end=%ld, size=%ld\n", i, (long)start * 512, ((long)start + (long)len) * 512, (long)len * 512);
-		printf("%ld\n", (long)start * 512);
-		printf("%ld\n", (long)len * 512);
+			fprintf(stderr, "Partition %d: start=%lu, end=%lu, size=%lu\n", i, start * 512, (start + len) * 512, len * 512);
+		printf("%lu\n", start * 512);
+		printf("%lu\n", len * 512);
 	}
 
 	if ((fd = open(filename, O_WRONLY|O_CREAT, 0644)) < 0) {
